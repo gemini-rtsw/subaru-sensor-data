@@ -2,6 +2,7 @@ version: '3'
 
 services:
   ioc:
+    image: ${CI_REGISTRY_IMAGE:-subaru-sensors}/ioc:${CI_COMMIT_REF_SLUG:-latest}
     build: ./ioc
     ports:
       - "5064:5064/udp"
@@ -20,6 +21,7 @@ services:
     restart: unless-stopped
 
   web:
+    image: ${CI_REGISTRY_IMAGE:-subaru-sensors}/web:${CI_COMMIT_REF_SLUG:-latest}
     build: ./web
     ports:
       - "8000:8000"
