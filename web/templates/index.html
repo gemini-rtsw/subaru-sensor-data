@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -231,13 +230,13 @@
                 // Map each PV to a group
                 const groupPvs = Object.values(sensorValues).filter(sensor => {
                     const pv = sensor.pv;
-                    if (groupId === 'humidity' && pv.includes('HUMIDITY')) return true;
-                    if (groupId === 'temperature' && pv.includes('TEMP') && !pv.includes('TIMESTAMP')) return true;
-                    if (groupId === 'wind' && pv.includes('WIND')) return true;
-                    if (groupId === 'particles_et' && pv.includes('PARTICLES:ET')) return true;
-                    if (groupId === 'particles_of' && pv.includes('PARTICLES:OF')) return true;
-                    if (groupId === 'so2' && pv.includes('SO2')) return true;
-                    if (groupId === 'other' && (pv.includes('PRESSURE') || pv.includes('DEWPOINT'))) return true;
+                    if (groupId === 'humidity' && pv.includes('humidity')) return true;
+                    if (groupId === 'temperature' && pv.includes('temp') && !pv.includes('timestamp')) return true;
+                    if (groupId === 'wind' && pv.includes('wind')) return true;
+                    if (groupId === 'particles_et' && pv.includes('particles:et')) return true;
+                    if (groupId === 'particles_of' && pv.includes('particles:of')) return true;
+                    if (groupId === 'so2' && pv.includes('so2')) return true;
+                    if (groupId === 'other' && (pv.includes('pressure') || pv.includes('dewpoint'))) return true;
                     return false;
                 });
                 

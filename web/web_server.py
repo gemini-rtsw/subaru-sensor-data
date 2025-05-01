@@ -44,77 +44,77 @@ PV_GROUPS = {
         "name": "Humidity",
         "unit": "% RH",
         "pvs": [
-            "SUBARU:HUMIDITY:NE",
-            "SUBARU:HUMIDITY:NW",
-            "SUBARU:HUMIDITY:SE",
-            "SUBARU:HUMIDITY:SW",
-            "SUBARU:HUMIDITY:OBS",
-            "SUBARU:HUMIDITY:CTRL",
-            "SUBARU:HUMIDITY:OUTSIDE"
+            "subaru:humidity:ne",
+            "subaru:humidity:nw",
+            "subaru:humidity:se",
+            "subaru:humidity:sw",
+            "subaru:humidity:obs",
+            "subaru:humidity:ctrl",
+            "subaru:humidity:outside"
         ]
     },
     "temperature": {
         "name": "Temperature",
         "unit": "°C",
         "pvs": [
-            "SUBARU:TEMP:NE",
-            "SUBARU:TEMP:NW",
-            "SUBARU:TEMP:SE",
-            "SUBARU:TEMP:SW",
-            "SUBARU:TEMP:OBS",
-            "SUBARU:TEMP:CTRL",
-            "SUBARU:TEMP:OUTSIDE",
-            "SUBARU:DEWPOINT"
+            "subaru:temp:ne",
+            "subaru:temp:nw",
+            "subaru:temp:se",
+            "subaru:temp:sw",
+            "subaru:temp:obs",
+            "subaru:temp:ctrl",
+            "subaru:temp:outside",
+            "subaru:dewpoint"
         ]
     },
     "wind": {
         "name": "Wind",
         "unit": "m/s",
         "pvs": [
-            "SUBARU:WIND:OPT",
-            "SUBARU:WIND:IR",
-            "SUBARU:WIND:REAR"
+            "subaru:wind:opt",
+            "subaru:wind:ir",
+            "subaru:wind:rear"
         ]
     },
     "pressure": {
         "name": "Pressure",
         "unit": "mbar",
         "pvs": [
-            "SUBARU:PRESSURE"
+            "subaru:pressure"
         ]
     },
     "particles": {
         "name": "Particle Concentration",
         "unit": "count/mL",
         "pvs": [
-            "SUBARU:PARTICLES:ET:0.3-0.5",
-            "SUBARU:PARTICLES:ET:0.5-1.0",
-            "SUBARU:PARTICLES:ET:1.0-2.5",
-            "SUBARU:PARTICLES:ET:2.5-4.0",
-            "SUBARU:PARTICLES:ET:4.0-10.0",
-            "SUBARU:PARTICLES:ET:TOTAL",
-            "SUBARU:PARTICLES:OF:0.3-0.5",
-            "SUBARU:PARTICLES:OF:0.5-1.0",
-            "SUBARU:PARTICLES:OF:1.0-2.5",
-            "SUBARU:PARTICLES:OF:2.5-4.0",
-            "SUBARU:PARTICLES:OF:4.0-10.0",
-            "SUBARU:PARTICLES:OF:TOTAL"
+            "subaru:particles:et:0.3-0.5",
+            "subaru:particles:et:0.5-1.0",
+            "subaru:particles:et:1.0-2.5",
+            "subaru:particles:et:2.5-4.0",
+            "subaru:particles:et:4.0-10.0",
+            "subaru:particles:et:total",
+            "subaru:particles:of:0.3-0.5",
+            "subaru:particles:of:0.5-1.0",
+            "subaru:particles:of:1.0-2.5",
+            "subaru:particles:of:2.5-4.0",
+            "subaru:particles:of:4.0-10.0",
+            "subaru:particles:of:total"
         ]
     },
     "so2": {
         "name": "SO2 Concentration",
         "unit": "ppm",
         "pvs": [
-            "SUBARU:SO2:ET",
-            "SUBARU:SO2:OF",
-            "SUBARU:SO2:NOAA"
+            "subaru:so2:et",
+            "subaru:so2:of",
+            "subaru:so2:noaa"
         ]
     },
     "timing": {
         "name": "Sample Timing",
         "unit": "seconds",
         "pvs": [
-            "SUBARU:TIMESTAMP"
+            "subaru:timestamp"
         ]
     }
 }
@@ -157,7 +157,7 @@ async def update_sensor_values():
             # Attempt to update all PVs defined in PV_GROUPS from the IOC
             for pv_name in all_web_pvs:
                 # Skip the timestamp PV here, we set it manually later
-                if pv_name == "SUBARU:TIMESTAMP":
+                if pv_name == "subaru:timestamp":
                     continue
 
                 try:
@@ -210,8 +210,8 @@ async def update_sensor_values():
                 sensor_values[pv_name]["timestamp"] = current_time
             
             # Update the global timestamp
-            sensor_values["SUBARU:TIMESTAMP"] = {
-                "pv": "SUBARU:TIMESTAMP",
+            sensor_values["subaru:timestamp"] = {
+                "pv": "subaru:timestamp",
                 "description": "Last update timestamp",
                 "value": current_time,
                 "unit": "seconds",
@@ -300,41 +300,41 @@ def initialize_sensor_values():
     
     # Mapping of sensor codes to PV names
     sensor_to_pv = {
-        "S1": "SUBARU:HUMIDITY:NE",
-        "S2": "SUBARU:HUMIDITY:NW",
-        "S3": "SUBARU:HUMIDITY:SE",
-        "S4": "SUBARU:HUMIDITY:SW",
-        "S5": "SUBARU:HUMIDITY:OBS",
-        "S6": "SUBARU:HUMIDITY:CTRL",
-        "S7": "SUBARU:HUMIDITY:OUTSIDE",
-        "S8": "SUBARU:TEMP:NE",
-        "S9": "SUBARU:TEMP:NW",
-        "S10": "SUBARU:TEMP:SE",
-        "S11": "SUBARU:TEMP:SW",
-        "S12": "SUBARU:TEMP:OBS",
-        "S13": "SUBARU:TEMP:CTRL",
-        "S14": "SUBARU:TEMP:OUTSIDE",
-        "S15": "SUBARU:WIND:OPT",
-        "S16": "SUBARU:WIND:IR",
-        "S17": "SUBARU:WIND:REAR",
-        "S18": "SUBARU:PRESSURE",
-        "S19": "SUBARU:DEWPOINT",
-        "S20": "SUBARU:PARTICLES:ET:0.3-0.5",
-        "S21": "SUBARU:PARTICLES:ET:0.5-1.0",
-        "S22": "SUBARU:PARTICLES:ET:1.0-2.5",
-        "S23": "SUBARU:PARTICLES:ET:2.5-4.0",
-        "S24": "SUBARU:PARTICLES:ET:4.0-10.0",
-        "S25": "SUBARU:PARTICLES:ET:TOTAL",
-        "S26": "SUBARU:PARTICLES:OF:0.3-0.5",
-        "S27": "SUBARU:PARTICLES:OF:0.5-1.0",
-        "S28": "SUBARU:PARTICLES:OF:1.0-2.5",
-        "S29": "SUBARU:PARTICLES:OF:2.5-4.0",
-        "S30": "SUBARU:PARTICLES:OF:4.0-10.0",
-        "S31": "SUBARU:PARTICLES:OF:TOTAL",
-        "S40": "SUBARU:SO2:ET",
-        "S41": "SUBARU:SO2:OF",
-        "S45": "SUBARU:SO2:NOAA",
-        "Epoch": "SUBARU:TIMESTAMP"
+        "S1": "subaru:humidity:ne",
+        "S2": "subaru:humidity:nw",
+        "S3": "subaru:humidity:se",
+        "S4": "subaru:humidity:sw",
+        "S5": "subaru:humidity:obs",
+        "S6": "subaru:humidity:ctrl",
+        "S7": "subaru:humidity:outside",
+        "S8": "subaru:temp:ne",
+        "S9": "subaru:temp:nw",
+        "S10": "subaru:temp:se",
+        "S11": "subaru:temp:sw",
+        "S12": "subaru:temp:obs",
+        "S13": "subaru:temp:ctrl",
+        "S14": "subaru:temp:outside",
+        "S15": "subaru:wind:opt",
+        "S16": "subaru:wind:ir",
+        "S17": "subaru:wind:rear",
+        "S18": "subaru:pressure",
+        "S19": "subaru:dewpoint",
+        "S20": "subaru:particles:et:0.3-0.5",
+        "S21": "subaru:particles:et:0.5-1.0",
+        "S22": "subaru:particles:et:1.0-2.5",
+        "S23": "subaru:particles:et:2.5-4.0",
+        "S24": "subaru:particles:et:4.0-10.0",
+        "S25": "subaru:particles:et:total",
+        "S26": "subaru:particles:of:0.3-0.5",
+        "S27": "subaru:particles:of:0.5-1.0",
+        "S28": "subaru:particles:of:1.0-2.5",
+        "S29": "subaru:particles:of:2.5-4.0",
+        "S30": "subaru:particles:of:4.0-10.0",
+        "S31": "subaru:particles:of:total",
+        "S40": "subaru:so2:et",
+        "S41": "subaru:so2:of",
+        "S45": "subaru:so2:noaa",
+        "Epoch": "subaru:timestamp"
     }
     
     # Create initial sensor values
@@ -358,9 +358,9 @@ def initialize_sensor_values():
             }
     
     # Make sure we have a timestamp
-    if "SUBARU:TIMESTAMP" not in sensor_values:
-        sensor_values["SUBARU:TIMESTAMP"] = {
-            "pv": "SUBARU:TIMESTAMP",
+    if "subaru:timestamp" not in sensor_values:
+        sensor_values["subaru:timestamp"] = {
+            "pv": "subaru:timestamp",
             "description": "Last update timestamp",
             "value": 0.0, # Set initial timestamp value to 0.0
             "unit": "seconds",
@@ -699,13 +699,13 @@ async def create_index_html():
                 // Map each PV to a group
                 const groupPvs = Object.values(sensorValues).filter(sensor => {
                     const pv = sensor.pv;
-                    if (groupId === 'humidity' && (pv.includes('HUMIDITY'))) return true;
-                    if (groupId === 'temperature' && (pv.includes('TEMP') || pv.includes('DEWPOINT')) && !pv.includes('TIMESTAMP')) return true;
-                    if (groupId === 'wind' && pv.includes('WIND')) return true;
-                    if (groupId === 'pressure' && pv.includes('PRESSURE')) return true;
-                    if (groupId === 'particles' && pv.includes('PARTICLES')) return true;
-                    if (groupId === 'so2' && pv.includes('SO2')) return true;
-                    if (groupId === 'timing' && pv.includes('TIMESTAMP')) return true;
+                    if (groupId === 'humidity' && (pv.includes('humidity'))) return true;
+                    if (groupId === 'temperature' && (pv.includes('temp') || pv.includes('dewpoint')) && !pv.includes('timestamp')) return true;
+                    if (groupId === 'wind' && pv.includes('wind')) return true;
+                    if (groupId === 'pressure' && pv.includes('pressure')) return true;
+                    if (groupId === 'particles' && pv.includes('particles')) return true;
+                    if (groupId === 'so2' && pv.includes('so2')) return true;
+                    if (groupId === 'timing' && pv.includes('timestamp')) return true;
                     return false;
                 });
                 
