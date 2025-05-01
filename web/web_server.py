@@ -140,7 +140,7 @@ connections = set()
 async def update_sensor_values():
     """Update sensor values from EPICS PVs"""
     # Create context for PVA access
-    ctx = Context('pva', conf={'EPICS_PVA_ADDR_LIST': IOC_HOST, 'EPICS_PVA_CONN_TMO': 2.0})
+    ctx = Context('pva', conf={'EPICS_PVA_ADDR_LIST': IOC_HOST, 'EPICS_PVA_CONN_TMO': '2.0'})
 
     # Get all PV names expected by the web interface from PV_GROUPS
     all_web_pvs = set()

@@ -121,13 +121,30 @@ class SubaruSensorsIOC:
         """Fetch sensor data periodically and update PVs"""
         logger.info(f"Data update loop started, refresh rate: {REFRESH_RATE}s")
         
+        # Counter for periodic diagnostics
+        update_count = 0
+        
         while self.running:
             try:
                 # Fetch sensor data
+                logger.info(f"Fetching sensor data from {SENSORS_URL}")
                 response = requests.get(SENSORS_URL, timeout=5)
+                
                 if response.status_code == 200:
                     data = response.json()
+                    logger.info(f"Successfully fetched data with {len(data)} sensors")
+                    
+                    # Log first few sensor IDs to verify content
+                    sample_sensors = list(data.keys())[:5]
+                    logger.info(f"Sample sensor IDs in data: {sample_sensors}")
+                    
+                    # Update PVs with the data
                     self.update_pvs(data)
+                    
+                    # Periodically log the current state of all PVs (every 5 updates)
+                    update_count += 1
+                    if update_count % 5 == 0:
+                        self.log_pv_values()
                 else:
                     logger.error(f"Failed to fetch data: HTTP {response.status_code}")
             except Exception as e:
@@ -136,8 +153,39 @@ class SubaruSensorsIOC:
             # Wait for next update cycle
             time.sleep(REFRESH_RATE)
     
+    def log_pv_values(self):
+        """Log the current values of all PVs for diagnostic purposes"""
+        logger.info("===== CURRENT PV VALUES =====")
+        
+        # Count how many PVs have non-zero values
+        non_zero_count = 0
+        
+        # Sort PV names for consistent output
+        pv_names = sorted(self.pvs.keys())
+        
+        for pv_name in pv_names:
+            # For diagnostic purposes, we'll directly access the PV's current value
+            # Note: In real EPICS usage, you'd use proper channel access methods
+            try:
+                # This is a simplification; actual implementation would depend on p4p internals
+                # In p4p SharedPV, current value can be accessed through a special get call
+                current_value = self.pvs[pv_name].current()
+                
+                # Count non-zero values
+                if isinstance(current_value, (int, float)) and current_value != 0.0:
+                    non_zero_count += 1
+                
+                logger.info(f"  PV: {pv_name} = {current_value}")
+            except Exception as e:
+                logger.warning(f"  Could not get value for PV {pv_name}: {e}")
+        
+        logger.info(f"Total PVs: {len(self.pvs)}, Non-zero values: {non_zero_count}")
+        logger.info("==============================")
+    
     def update_pvs(self, data):
         """Update PVs with new values from the data"""
+        update_count = 0
+        
         for sensor_id, pv_name in pv_mapping.items():
             if sensor_id in data:
                 sensor_data = data[sensor_id]
@@ -156,8 +204,11 @@ class SubaruSensorsIOC:
                 # Post the update (use try-except for robustness if PV doesn't exist)
                 try:
                     self.pvs[pv_name].post(value)
+                    update_count += 1
                 except KeyError:
                     logger.warning(f"PV {pv_name} not found in self.pvs dictionary. Skipping update.")
+        
+        logger.info(f"Updated {update_count} PVs out of {len(pv_mapping)} mapped sensors")
 
 if __name__ == "__main__":
     # Configure logger
