@@ -1,0 +1,303 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subaru Sensors Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+        .sensor-group {
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 20px;
+            min-width: 300px;
+            max-width: 600px;
+            flex: 1;
+        }
+        .sensor-group h2 {
+            margin-top: 0;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            color: #2c3e50;
+        }
+        .sensor-list {
+            list-style: none;
+            padding: 0;
+        }
+        .sensor-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+        }
+        .sensor-item:last-child {
+            border-bottom: none;
+        }
+        .sensor-name {
+            font-weight: bold;
+        }
+        .sensor-value {
+            font-family: monospace;
+            min-width: 80px;
+            text-align: right;
+        }
+        .alarm-0 { color: #2ecc71; } /* No alarm */
+        .alarm-1 { color: #3498db; } /* Minor alarm */
+        .alarm-2 { color: #f39c12; } /* Major alarm */
+        .alarm-3 { color: #e74c3c; } /* Invalid */
+        .status-bar {
+            background-color: #2c3e50;
+            color: white;
+            padding: 10px 20px;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+        }
+        .connection-status {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        .connected { background-color: #2ecc71; }
+        .connecting { background-color: #f39c12; }
+        .disconnected { background-color: #e74c3c; }
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            .sensor-group {
+                width: 100%;
+                max-width: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Subaru Sensors Dashboard</h1>
+    </div>
+    
+    <div class="container" id="sensor-groups">
+        <!-- Sensor groups will be inserted here -->
+        <div class="sensor-group">
+            <h2>Loading data...</h2>
+        </div>
+    </div>
+    
+    <div class="status-bar">
+        <div>
+            <span class="connection-status disconnected" id="connection-status"></span>
+            <span id="connection-text">Connecting...</span>
+        </div>
+        <div id="update-time">Last update: Never</div>
+    </div>
+
+    <script>
+        // Global variables
+        let sensorValues = {};
+        let websocket = null;
+        let reconnectTimer = null;
+        
+        // Group definitions (should match server-side)
+        const sensorGroups = {
+            "humidity": {
+                "name": "Humidity",
+                "unit": "% RH"
+            },
+            "temperature": {
+                "name": "Temperature",
+                "unit": "°C"
+            },
+            "wind": {
+                "name": "Wind",
+                "unit": "m/s"
+            },
+            "other": {
+                "name": "Other",
+                "unit": ""
+            },
+            "particles_et": {
+                "name": "Elevator Tower Particles",
+                "unit": "count/mL"
+            },
+            "particles_of": {
+                "name": "Observation Floor Particles",
+                "unit": "count/mL"
+            },
+            "so2": {
+                "name": "SO2",
+                "unit": "ppm"
+            }
+        };
+        
+        // Initialize the dashboard
+        function initDashboard() {
+            const container = document.getElementById('sensor-groups');
+            container.innerHTML = '';
+            
+            // Create a div for each sensor group
+            for (const [groupId, group] of Object.entries(sensorGroups)) {
+                container.innerHTML += `
+                    <div class="sensor-group" id="group-${groupId}">
+                        <h2>${group.name}</h2>
+                        <ul class="sensor-list" id="sensors-${groupId}">
+                            <li>Loading...</li>
+                        </ul>
+                    </div>
+                `;
+            }
+            
+            // Connect to websocket
+            connectWebSocket();
+        }
+        
+        // Connect to WebSocket
+        function connectWebSocket() {
+            // Clear any pending reconnection
+            if (reconnectTimer) {
+                clearTimeout(reconnectTimer);
+                reconnectTimer = null;
+            }
+            
+            // Update status
+            updateConnectionStatus('connecting');
+            
+            // Create WebSocket
+            websocket = new WebSocket(`ws://${window.location.host}/ws`);
+            
+            // Set up event handlers
+            websocket.onopen = () => {
+                updateConnectionStatus('connected');
+            };
+            
+            websocket.onmessage = (event) => {
+                handleWebSocketMessage(event);
+            };
+            
+            websocket.onclose = () => {
+                updateConnectionStatus('disconnected');
+                scheduleReconnect();
+            };
+            
+            websocket.onerror = (error) => {
+                console.error("WebSocket error:", error);
+                websocket.close();
+            };
+        }
+        
+        // Handle WebSocket messages
+        function handleWebSocketMessage(event) {
+            const message = JSON.parse(event.data);
+            
+            if (message.type === 'update') {
+                sensorValues = message.data;
+                updateDashboard();
+                updateLastUpdateTime();
+            }
+        }
+        
+        // Update the dashboard with current values
+        function updateDashboard() {
+            for (const [groupId, group] of Object.entries(sensorGroups)) {
+                const sensorList = document.getElementById(`sensors-${groupId}`);
+                let html = '';
+                
+                // Map each PV to a group
+                const groupPvs = Object.values(sensorValues).filter(sensor => {
+                    const pv = sensor.pv;
+                    if (groupId === 'humidity' && pv.includes('HUMIDITY')) return true;
+                    if (groupId === 'temperature' && pv.includes('TEMP') && !pv.includes('TIMESTAMP')) return true;
+                    if (groupId === 'wind' && pv.includes('WIND')) return true;
+                    if (groupId === 'particles_et' && pv.includes('PARTICLES:ET')) return true;
+                    if (groupId === 'particles_of' && pv.includes('PARTICLES:OF')) return true;
+                    if (groupId === 'so2' && pv.includes('SO2')) return true;
+                    if (groupId === 'other' && (pv.includes('PRESSURE') || pv.includes('DEWPOINT'))) return true;
+                    return false;
+                });
+                
+                if (groupPvs.length === 0) {
+                    html = '<li>No data available</li>';
+                } else {
+                    for (const sensor of groupPvs) {
+                        html += `
+                            <li class="sensor-item">
+                                <span class="sensor-name">${sensor.description}</span>
+                                <span class="sensor-value alarm-${sensor.alarm}">
+                                    ${sensor.value.toFixed(2)} ${sensor.unit}
+                                </span>
+                            </li>
+                        `;
+                    }
+                }
+                
+                sensorList.innerHTML = html;
+            }
+        }
+        
+        // Update connection status indicator
+        function updateConnectionStatus(status) {
+            const statusElement = document.getElementById('connection-status');
+            const textElement = document.getElementById('connection-text');
+            
+            statusElement.className = `connection-status ${status}`;
+            
+            if (status === 'connected') {
+                textElement.innerText = 'Connected';
+            } else if (status === 'connecting') {
+                textElement.innerText = 'Connecting...';
+            } else if (status === 'disconnected') {
+                textElement.innerText = 'Disconnected';
+            }
+        }
+        
+        // Update the last update time
+        function updateLastUpdateTime() {
+            const element = document.getElementById('update-time');
+            const now = new Date();
+            const timeString = now.toLocaleTimeString();
+            element.innerText = `Last update: ${timeString}`;
+        }
+        
+        // Schedule reconnection attempt
+        function scheduleReconnect() {
+            if (reconnectTimer) {
+                clearTimeout(reconnectTimer);
+            }
+            
+            reconnectTimer = setTimeout(() => {
+                connectWebSocket();
+            }, 3000);
+        }
+        
+        // Initialize on page load
+        window.addEventListener('load', initDashboard);
+    </script>
+</body>
+</html>
+        
