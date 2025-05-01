@@ -4,7 +4,8 @@ FROM rockylinux:9
 RUN dnf -y update && \
     dnf -y install epel-release && \
     dnf config-manager --set-enabled crb && \
-    dnf -y install --nobest python3 python3-devel gcc gcc-c++ make wget git readline-devel
+    dnf -y install --nobest python3 python3-devel gcc gcc-c++ make wget git readline-devel \
+    perl-FindBin perl-File-Copy perl
 
 # Install pip
 RUN python3 -m ensurepip && \
