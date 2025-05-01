@@ -1,9 +1,10 @@
 FROM rockylinux:9
 
-# Install required packages
+# Enable CodeReady Builder (CRB) repository and install required packages
 RUN dnf -y update && \
     dnf -y install epel-release && \
-    dnf -y install python3 python3-devel gcc gcc-c++ make wget git readline-devel perl-devel
+    dnf config-manager --set-enabled crb && \
+    dnf -y install --nobest python3 python3-devel gcc gcc-c++ make wget git readline-devel
 
 # Install pip
 RUN python3 -m ensurepip && \
