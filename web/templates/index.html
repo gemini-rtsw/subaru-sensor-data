@@ -137,21 +137,25 @@
                 "name": "Wind",
                 "unit": "m/s"
             },
-            "other": {
-                "name": "Other",
-                "unit": ""
+            "pressure": {
+                "name": "Pressure",
+                "unit": "mbar"
             },
-            "particles_et": {
-                "name": "Elevator Tower Particles",
-                "unit": "count/mL"
-            },
-            "particles_of": {
-                "name": "Observation Floor Particles",
+            "particles": {
+                "name": "Particle Concentration",
                 "unit": "count/mL"
             },
             "so2": {
-                "name": "SO2",
+                "name": "SO2 Concentration",
                 "unit": "ppm"
+            },
+            "timing": {
+                "name": "Sample Timing",
+                "unit": "seconds"
+            },
+            "timestamps": {
+                "name": "Sample Timestamps",
+                "unit": "seconds"
             }
         };
         
@@ -233,10 +237,11 @@
                     if (groupId === 'humidity' && pv.includes('humidity')) return true;
                     if (groupId === 'temperature' && pv.includes('temp') && !pv.includes('timestamp')) return true;
                     if (groupId === 'wind' && pv.includes('wind')) return true;
-                    if (groupId === 'particles_et' && pv.includes('particles:et')) return true;
-                    if (groupId === 'particles_of' && pv.includes('particles:of')) return true;
+                    if (groupId === 'particles' && pv.includes('particles')) return true;
                     if (groupId === 'so2' && pv.includes('so2')) return true;
-                    if (groupId === 'other' && (pv.includes('pressure') || pv.includes('dewpoint'))) return true;
+                    if (groupId === 'pressure' && pv.includes('pressure')) return true;
+                    if (groupId === 'timing' && pv.includes('timing')) return true;
+                    if (groupId === 'timestamps' && pv.includes('timestamp') && pv !== 'subaru:timestamp') return true;
                     return false;
                 });
                 

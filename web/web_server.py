@@ -64,7 +64,9 @@ PV_GROUPS = {
             "subaru:temp:obs",
             "subaru:temp:ctrl",
             "subaru:temp:outside",
-            "subaru:dewpoint"
+            "subaru:dewpoint",
+            "subaru:temp:et:so2",
+            "subaru:temp:of:so2"
         ]
     },
     "wind": {
@@ -114,7 +116,22 @@ PV_GROUPS = {
         "name": "Sample Timing",
         "unit": "seconds",
         "pvs": [
-            "subaru:timestamp"
+            "subaru:timestamp",
+            "subaru:timing:et:particles",
+            "subaru:timing:of:particles",
+            "subaru:timing:et:so2",
+            "subaru:timing:of:so2"
+        ]
+    },
+    "timestamps": {
+        "name": "Sample Timestamps",
+        "unit": "seconds",
+        "pvs": [
+            "subaru:timestamp:et:particles",
+            "subaru:timestamp:of:particles",
+            "subaru:timestamp:et:so2",
+            "subaru:timestamp:of:so2",
+            "subaru:timestamp:noaa:so2"
         ]
     }
 }
@@ -331,8 +348,19 @@ def initialize_sensor_values():
         "S29": "subaru:particles:of:2.5-4.0",
         "S30": "subaru:particles:of:4.0-10.0",
         "S31": "subaru:particles:of:total",
+        "S32": "subaru:timing:et:particles",
+        "S33": "subaru:timing:of:particles",
+        "S34": "subaru:timing:et:so2",
+        "S35": "subaru:timing:of:so2",
+        "S36": "subaru:timestamp:et:particles",
+        "S37": "subaru:timestamp:of:particles",
+        "S38": "subaru:timestamp:et:so2",
+        "S39": "subaru:timestamp:of:so2",
         "S40": "subaru:so2:et",
         "S41": "subaru:so2:of",
+        "S42": "subaru:temp:et:so2",
+        "S43": "subaru:temp:of:so2",
+        "S44": "subaru:timestamp:noaa:so2",
         "S45": "subaru:so2:noaa",
         "Epoch": "subaru:timestamp"
     }

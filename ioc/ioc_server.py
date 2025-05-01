@@ -49,12 +49,21 @@ pv_mapping = {
     "S29": "subaru:particles:of:2.5-4.0",
     "S30": "subaru:particles:of:4.0-10.0",
     "S31": "subaru:particles:of:total",
-    # Note: S32-S39 are timings/periods, S42-S44 are related temps/timestamps.
-    #       Skipping these for now as they might not fit the NTScalar('d') type well
-    #       or require different handling (e.g., timestamps).
-    # S32: "...", S33: "...", etc.
+    # Adding timing/period sensors
+    "S32": "subaru:timing:et:particles",
+    "S33": "subaru:timing:of:particles",
+    "S34": "subaru:timing:et:so2",
+    "S35": "subaru:timing:of:so2",
+    "S36": "subaru:timestamp:et:particles",
+    "S37": "subaru:timestamp:of:particles",
+    "S38": "subaru:timestamp:et:so2",
+    "S39": "subaru:timestamp:of:so2",
     "S40": "subaru:so2:et",
     "S41": "subaru:so2:of",
+    # Adding temperature sensors for SO2
+    "S42": "subaru:temp:et:so2",
+    "S43": "subaru:temp:of:so2",
+    "S44": "subaru:timestamp:noaa:so2",
     "S45": "subaru:so2:noaa",
     "Epoch": "subaru:timestamp" # Assuming Epoch maps to the timestamp PV
 }
