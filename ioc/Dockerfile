@@ -1,18 +1,13 @@
-FROM centos:8
-
-# Fix CentOS 8 repos that are EOL
-RUN cd /etc/yum.repos.d/ && \
-    sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-* && \
-    sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*
+FROM rockylinux:9
 
 # Install required packages
-RUN yum -y update && \
-    yum -y install epel-release && \
-    yum -y install python39 python39-devel gcc gcc-c++ make wget git readline-devel perl-devel
+RUN dnf -y update && \
+    dnf -y install epel-release && \
+    dnf -y install python3 python3-devel gcc gcc-c++ make wget git readline-devel perl-devel
 
 # Install pip
-RUN python3.9 -m ensurepip && \
-    python3.9 -m pip install --upgrade pip
+RUN python3 -m ensurepip && \
+    python3 -m pip install --upgrade pip
 
 # Create app directory
 WORKDIR /app
@@ -40,7 +35,7 @@ ENV EPICS_PVA_SERVER_PORT=5075
 COPY requirements.txt .
 
 # Install Python dependencies
-RUN python3.9 -m pip install -r requirements.txt
+RUN python3 -m pip install -r requirements.txt
 
 # Copy application code
 COPY . .
@@ -49,4 +44,4 @@ COPY . .
 EXPOSE 5076 5075
 
 # Run the IOC
-CMD ["python3.9", "ioc_server.py"] 
+CMD ["python3", "ioc_server.py"] 
