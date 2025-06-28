@@ -2,6 +2,7 @@ FROM rockylinux:9
 
 # Enable CodeReady Builder (CRB) repository and install required packages
 RUN dnf -y update && \
+    dnf -y install dnf-plugins-core && \
     dnf config-manager --set-enabled crb && \
     dnf -y install --nobest python3 python3-devel gcc gcc-c++ make wget git readline-devel \
     perl-FindBin perl-File-Copy perl
