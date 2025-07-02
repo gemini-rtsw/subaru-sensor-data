@@ -1,10 +1,15 @@
 FROM rockylinux:9
 
+# Configure dnf for better network resilience
+RUN echo "timeout=60" >> /etc/dnf/dnf.conf && \
+    echo "retries=10" >> /etc/dnf/dnf.conf && \
+    echo "minrate=1000" >> /etc/dnf/dnf.conf
+
 # Enable CodeReady Builder (CRB) repository and install required packages
 RUN dnf -y update && \
     dnf -y install dnf-plugins-core && \
     dnf config-manager --set-enabled crb && \
-    dnf -y install --nobest python3 python3-devel gcc gcc-c++ make wget curl git readline-devel \
+    dnf -y install --nobest --allowerasing python3 python3-devel gcc gcc-c++ make wget curl git readline-devel \
     perl-FindBin perl-File-Copy perl
 
 # Install pip
