@@ -4,7 +4,7 @@ FROM rockylinux:9
 RUN dnf -y update && \
     dnf -y install dnf-plugins-core && \
     dnf config-manager --set-enabled crb && \
-    dnf -y install --nobest python3 python3-devel gcc gcc-c++ make wget git readline-devel \
+    dnf -y install --nobest python3 python3-devel gcc gcc-c++ make wget curl git readline-devel \
     perl-FindBin perl-File-Copy perl
 
 # Install pip
@@ -17,9 +17,15 @@ WORKDIR /app
 # Install EPICS from source
 RUN mkdir -p /opt/epics && \
     cd /opt/epics && \
-    wget https://epics.anl.gov/download/base/base-7.0.7.tar.gz && \
+    (wget --timeout=30 --tries=3 --retry-connrefused --waitretry=5 \
+         https://epics.anl.gov/download/base/base-7.0.7.tar.gz || \
+     curl -L --connect-timeout 30 --retry 3 --retry-delay 5 \
+         https://epics.anl.gov/download/base/base-7.0.7.tar.gz -o base-7.0.7.tar.gz || \
+     wget --timeout=60 --tries=2 \
+         https://github.com/epics-base/epics-base/archive/refs/tags/R7.0.7.tar.gz \
+         -O base-7.0.7.tar.gz) && \
     tar -xzf base-7.0.7.tar.gz && \
-    cd base-7.0.7 && \
+    cd base-* && \
     make -j4
 
 # Set environment variables
