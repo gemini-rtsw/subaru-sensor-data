@@ -30,7 +30,7 @@ RUN mkdir -p /opt/epics && \
          https://github.com/epics-base/epics-base/archive/refs/tags/R7.0.7.tar.gz \
          -O base-7.0.7.tar.gz) && \
     tar -xzf base-7.0.7.tar.gz && \
-    cd base-* && \
+    cd base-7.0.7 && \
     make -j4
 
 # Set environment variables
