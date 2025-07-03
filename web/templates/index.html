@@ -18,6 +18,33 @@
             text-align: center;
             margin-bottom: 20px;
             border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 {
+            margin: 0;
+            flex-grow: 1;
+        }
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .toggle-button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .toggle-button:hover {
+            background-color: #2980b9;
+        }
+        .toggle-button.active {
+            background-color: #e74c3c;
         }
         .container {
             display: flex;
@@ -49,18 +76,67 @@
             border-bottom: 1px solid #eee;
             display: flex;
             justify-content: space-between;
+            position: relative;
+            cursor: pointer;
         }
         .sensor-item:last-child {
             border-bottom: none;
         }
+        .sensor-item:hover {
+            background-color: #f8f9fa;
+        }
         .sensor-name {
             font-weight: bold;
+            flex-grow: 1;
         }
         .sensor-value {
             font-family: monospace;
             min-width: 80px;
             text-align: right;
         }
+        .pv-name {
+            font-family: monospace;
+            font-size: 12px;
+            color: #7f8c8d;
+            font-weight: normal;
+            display: block;
+            margin-top: 4px;
+        }
+        .pv-name.hidden {
+            display: none;
+        }
+        
+        /* Tooltip styles */
+        .tooltip {
+            position: absolute;
+            background-color: #2c3e50;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-family: monospace;
+            white-space: nowrap;
+            z-index: 1000;
+            top: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        .tooltip::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-top-color: #2c3e50;
+        }
+        .sensor-item:hover .tooltip {
+            opacity: 1;
+        }
+        
         .alarm-0 { color: #2ecc71; } /* No alarm */
         .alarm-1 { color: #3498db; } /* Minor alarm */
         .alarm-2 { color: #f39c12; } /* Major alarm */
@@ -94,12 +170,23 @@
                 width: 100%;
                 max-width: none;
             }
+            .header {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .header h1 {
+                margin-bottom: 10px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="header">
         <h1>Subaru Sensors Dashboard</h1>
+        <div class="toggle-container">
+            <span>Show PV Names:</span>
+            <button class="toggle-button" id="pv-toggle" onclick="togglePVNames()">OFF</button>
+        </div>
     </div>
     
     <div class="container" id="sensor-groups">
@@ -122,6 +209,7 @@
         let sensorValues = {};
         let websocket = null;
         let reconnectTimer = null;
+        let showPVNames = false;
         
         // Group definitions (should match server-side)
         const sensorGroups = {
@@ -178,6 +266,23 @@
             
             // Connect to websocket
             connectWebSocket();
+        }
+        
+        // Toggle PV names display
+        function togglePVNames() {
+            showPVNames = !showPVNames;
+            const toggleButton = document.getElementById('pv-toggle');
+            
+            if (showPVNames) {
+                toggleButton.textContent = 'ON';
+                toggleButton.classList.add('active');
+            } else {
+                toggleButton.textContent = 'OFF';
+                toggleButton.classList.remove('active');
+            }
+            
+            // Update dashboard to show/hide PV names
+            updateDashboard();
         }
         
         // Connect to WebSocket
@@ -249,9 +354,14 @@
                     html = '<li>No data available</li>';
                 } else {
                     for (const sensor of groupPvs) {
+                        const pvNameClass = showPVNames ? '' : 'hidden';
                         html += `
                             <li class="sensor-item">
-                                <span class="sensor-name">${sensor.description}</span>
+                                <div class="tooltip">PV: ${sensor.pv}</div>
+                                <span class="sensor-name">
+                                    ${sensor.description}
+                                    <span class="pv-name ${pvNameClass}">${sensor.pv}</span>
+                                </span>
                                 <span class="sensor-value alarm-${sensor.alarm}">
                                     ${sensor.value.toFixed(2)} ${sensor.unit}
                                 </span>
