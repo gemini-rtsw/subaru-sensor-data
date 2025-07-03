@@ -32,26 +32,24 @@ if ! docker info > /dev/null 2>&1; then
     exit 1
 fi
 
-# Check if docker-compose is available
-if ! command -v docker-compose > /dev/null 2>&1; then
-    print_error "docker-compose is not available. Please install docker-compose."
-    exit 1
-fi
-
 print_status "Starting build process..."
+
+# Set image names to match docker-compose.yml
+IOC_IMAGE="registry.gitlab.com/nsf-noirlab/gemini/rtsw/iocs/subaru-sensor-data/ioc:master"
+WEB_IMAGE="registry.gitlab.com/nsf-noirlab/gemini/rtsw/iocs/subaru-sensor-data/web:master"
 
 # Build IOC image
 print_status "Building IOC image..."
-if docker-compose build ioc; then
+if docker build -t "$IOC_IMAGE" ./ioc; then
     print_status "✅ IOC image built successfully"
 else
     print_error "❌ Failed to build IOC image"
     exit 1
 fi
 
-# Build web image
+# Build web image  
 print_status "Building web image..."
-if docker-compose build web; then
+if docker build -t "$WEB_IMAGE" ./web; then
     print_status "✅ Web image built successfully"
 else
     print_error "❌ Failed to build web image"
@@ -60,7 +58,11 @@ fi
 
 print_status "🎉 All images built successfully!"
 print_status ""
-print_status "You can now run the system with:"
+print_status "Images built:"
+print_status "  $IOC_IMAGE"
+print_status "  $WEB_IMAGE"
+print_status ""
+print_status "You can now run with docker-compose:"
 print_status "  docker-compose up -d"
 print_status ""
 print_status "Or check the built images with:"

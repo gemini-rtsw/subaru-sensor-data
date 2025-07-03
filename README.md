@@ -62,32 +62,38 @@ The web server provides the following API endpoints:
 
 ### Building Docker Images
 
-The system uses Docker images for deployment. Images are built automatically in CI/CD, but you can also build them locally for development or testing.
+The system uses Docker images for deployment. Images are built automatically in CI/CD and pulled from the registry in production.
 
-#### Building Images Locally
+#### Production Deployment (Linux)
 
-Use the provided build script to build both images:
+In production on Linux, `docker-compose` pulls pre-built images from the GitLab registry:
 
 ```bash
-./build-images.sh
+# Pull and start containers (Linux production)
+docker-compose up -d
 ```
 
-Or build them individually using Docker Compose:
+#### Mac Development
+
+For Mac development, use the Mac-specific compose file due to Docker networking differences:
 
 ```bash
-# Build both images
-docker-compose build
+# Mac development
+docker-compose -f docker-compose.mac.yml up -d
+```
 
-# Build only the IOC image
-docker-compose build ioc
+#### Local Development
 
-# Build only the web image
-docker-compose build web
+For local development, use the build script to create images locally:
+
+```bash
+# Build both images locally
+./build-images.sh
 ```
 
 #### Manual Docker Build
 
-You can also build the images manually:
+You can also build the images manually if needed:
 
 ```bash
 # Build IOC image

@@ -2,6 +2,7 @@
 """
 Subaru Sensors IOC Server
 Fetches data from the Subaru Sensors JSON endpoint and serves it as EPICS PVs.
+Supports both Channel Access (CA) and PVAccess (PVA) protocols.
 """
 
 import time
@@ -11,6 +12,7 @@ from loguru import logger
 from p4p import nt
 from p4p.server import Server
 from p4p.server.thread import SharedPV
+from pcaspy import Driver, SimpleServer
 
 # Configuration
 SENSORS_URL = "https://www.naoj.org/Weather/data/SubaruSensors.json"
@@ -84,17 +86,36 @@ class Handler(object):
             op.done(error=str(e))
             logger.error(f"Error handling put on {op.name()}: {e}")
 
+class CADriver(Driver):
+    """Channel Access driver for pcaspy"""
+    
+    def __init__(self, ca_pvs):
+        super().__init__()
+        self.ca_pvs = ca_pvs
+        
+    def write(self, reason, value):
+        """Handle Channel Access put operations"""
+        try:
+            # Set the parameter value
+            self.setParam(reason, value)
+            self.updatePVs()
+            logger.info(f"CA PV updated by client: {reason} = {value}")
+            return True
+        except Exception as e:
+            logger.error(f"Error handling CA put on {reason}: {e}")
+            return False
+
 class SubaruSensorsIOC:
-    """Subaru Sensors IOC implementation"""
+    """Subaru Sensors IOC implementation with both PVA and CA support"""
     
     def __init__(self):
-        """Initialize the IOC with all PVs"""
+        """Initialize the IOC with all PVs for both protocols"""
         self.pvs = {}
         self.provider = {}
         self.running = True
         self.handler = Handler()
         
-        # Create all PVs with initial values
+        # Create PVA PVs (p4p)
         for sensor_id, pv_name in pv_mapping.items():
             # Create a scalar double PV, explicitly initialized to 0.0
             pv = SharedPV(nt=nt.NTScalar('d'),
@@ -104,17 +125,38 @@ class SubaruSensorsIOC:
             self.pvs[pv_name] = pv
             self.provider[pv_name] = pv
         
+        # Create CA PVs database (pcaspy)
+        self.ca_pvdb = {}
+        for sensor_id, pv_name in pv_mapping.items():
+            # Remove the 'subaru:' prefix for CA PVs since pcaspy will add it
+            ca_name = pv_name.replace('subaru:', '')
+            self.ca_pvdb[ca_name] = {
+                'type': 'float',
+                'value': 0.0,
+                'prec': 6
+            }
+        
+        # Set up CA server
+        self.ca_server = SimpleServer()
+        self.ca_server.createPV('subaru:', self.ca_pvdb)
+        self.ca_driver = CADriver(self.ca_pvdb)
+        
         # Start the data fetch thread
         self.thread = threading.Thread(target=self.update_loop, daemon=True)
     
     def start(self):
-        """Start the IOC server"""
-        logger.info("Starting Subaru Sensors IOC...")
+        """Start the IOC server with both PVA and CA protocols"""
+        logger.info("Starting Subaru Sensors IOC (PVA + CA)...")
         self.thread.start()
         
-        # Create server with PV provider dictionary
-        logger.info(f"Starting server with {len(self.provider)} PVs: {', '.join(self.provider.keys())}")
-        server = Server(providers=[self.provider])
+        # Create PVA server
+        logger.info(f"Starting PVA server with {len(self.provider)} PVs")
+        pva_server = Server(providers=[self.provider])
+        
+        # Start CA server in a separate thread
+        logger.info(f"Starting CA server with {len(self.ca_pvdb)} PVs")
+        ca_thread = threading.Thread(target=self.ca_server_loop, daemon=True)
+        ca_thread.start()
         
         try:
             # Keep main thread alive
@@ -124,7 +166,19 @@ class SubaruSensorsIOC:
             logger.info("Shutting down Subaru Sensors IOC...")
             self.running = False
             self.thread.join(timeout=2.0)
-            server.stop()
+            ca_thread.join(timeout=2.0)
+            pva_server.stop()
+    
+    def ca_server_loop(self):
+        """Process CA server events in a separate thread"""
+        logger.info("CA server processing loop started")
+        while self.running:
+            try:
+                # Process CA server events
+                self.ca_server.process(0.1)
+            except Exception as e:
+                logger.error(f"CA server processing error: {e}")
+                time.sleep(0.1)
     
     def update_loop(self):
         """Fetch sensor data periodically and update PVs"""
@@ -192,7 +246,7 @@ class SubaruSensorsIOC:
         logger.info("==============================")
     
     def update_pvs(self, data):
-        """Update PVs with new values from the data"""
+        """Update PVs with new values from the data for both PVA and CA"""
         update_count = 0
         
         for sensor_id, pv_name in pv_mapping.items():
@@ -208,16 +262,28 @@ class SubaruSensorsIOC:
                 description = sensor_data.get('Description', f"Subaru Sensor {sensor_id}")
                 units = sensor_data.get('Units', '')
                 
-                # Update PV value
+                # Update PVA server (p4p)
                 logger.info(f"Updating PV {pv_name} with value {value} {units}")
-                # Post the update (use try-except for robustness if PV doesn't exist)
                 try:
                     self.pvs[pv_name].post(value)
                     update_count += 1
                 except KeyError:
-                    logger.warning(f"PV {pv_name} not found in self.pvs dictionary. Skipping update.")
+                    logger.warning(f"PVA PV {pv_name} not found in self.pvs dictionary. Skipping update.")
+                
+                # Update CA server (pcaspy)
+                ca_name = pv_name.replace('subaru:', '')
+                try:
+                    self.ca_driver.setParam(ca_name, value)
+                except Exception as e:
+                    logger.warning(f"CA PV {ca_name} update failed: {e}")
         
-        logger.info(f"Updated {update_count} PVs out of {len(pv_mapping)} mapped sensors")
+        # Tell CA server to update all clients
+        try:
+            self.ca_driver.updatePVs()
+        except Exception as e:
+            logger.warning(f"CA server updatePVs failed: {e}")
+        
+        logger.info(f"Updated {update_count} PVs out of {len(pv_mapping)} mapped sensors (both PVA and CA)")
 
 if __name__ == "__main__":
     # Configure logger

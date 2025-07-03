@@ -1,5 +1,11 @@
 import subprocess
 import sys
+import os
+
+# Set up EPICS environment for localhost
+os.environ['EPICS_CA_ADDR_LIST'] = 'localhost'
+os.environ['EPICS_CA_AUTO_ADDR_LIST'] = 'NO'
+
 try:
     import epics
 except ImportError:
