@@ -60,6 +60,43 @@ The web server provides the following API endpoints:
 
 ## Development
 
+### Building Docker Images
+
+The system uses Docker images for deployment. Images are built automatically in CI/CD, but you can also build them locally for development or testing.
+
+#### Building Images Locally
+
+Use the provided build script to build both images:
+
+```bash
+./build-images.sh
+```
+
+Or build them individually using Docker Compose:
+
+```bash
+# Build both images
+docker-compose build
+
+# Build only the IOC image
+docker-compose build ioc
+
+# Build only the web image
+docker-compose build web
+```
+
+#### Manual Docker Build
+
+You can also build the images manually:
+
+```bash
+# Build IOC image
+docker build -t subaru-sensors-ioc ./ioc
+
+# Build web image
+docker build -t subaru-sensors-web ./web
+```
+
 ### Project Structure
 
 ```

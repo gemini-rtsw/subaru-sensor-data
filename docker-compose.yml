@@ -4,11 +4,7 @@ services:
   ioc:
     image: ${CI_REGISTRY_IMAGE:-registry.gitlab.com/nsf-noirlab/gemini/rtsw/iocs/subaru-sensor-data}/ioc:${CI_COMMIT_REF_SLUG:-master}
     build: ./ioc
-    ports:
-      - "5064:5064/udp"
-      - "5065:5065/tcp"
-      - "5076:5076"
-      - "5075:5075"
+    network_mode: host
     environment:
       - EPICS_CA_AUTO_ADDR_LIST=NO
       - EPICS_CA_ADDR_LIST=localhost
@@ -28,7 +24,7 @@ services:
     depends_on:
       - ioc
     environment:
-      - IOC_HOST=ioc
+      - IOC_HOST=localhost
       - IOC_PORT=5076
     volumes:
       - ./web:/app
