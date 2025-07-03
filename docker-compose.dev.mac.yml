@@ -4,10 +4,10 @@ services:
   ioc:
     image: ${CI_REGISTRY_IMAGE:-registry.gitlab.com/nsf-noirlab/gemini/rtsw/iocs/subaru-sensor-data}/ioc:${CI_COMMIT_REF_SLUG:-master}
     ports:
+      - "5065:5065"
       - "5064:5064/udp"
-      - "5065:5065/tcp"
-      - "5076:5076"
       - "5075:5075"
+      - "5076:5076"
     environment:
       - EPICS_CA_AUTO_ADDR_LIST=NO
       - EPICS_CA_ADDR_LIST=0.0.0.0
@@ -18,7 +18,8 @@ services:
       - EPICS_PVA_AUTO_ADDR_LIST=NO
       - EPICS_PVA_BROADCAST_PORT=5076
       - EPICS_PVA_SERVER_PORT=5075
-
+    volumes:
+      - ./ioc:/app
     restart: unless-stopped
 
   web:
@@ -30,5 +31,6 @@ services:
     environment:
       - IOC_HOST=ioc
       - IOC_PORT=5076
-
+    volumes:
+      - ./web:/app
     restart: unless-stopped 

@@ -64,32 +64,46 @@ The web server provides the following API endpoints:
 
 The system uses Docker images for deployment. Images are built automatically in CI/CD and pulled from the registry in production.
 
-#### Production Deployment (Linux)
+#### Production Deployment
 
-In production on Linux, `docker-compose` pulls pre-built images from the GitLab registry:
-
+**Linux Production (containers only, host networking)**
 ```bash
-# Pull and start containers (Linux production)
+# Pull pre-built images from registry
 docker-compose up -d
 ```
 
-#### Mac Development
-
-For Mac development, use the Mac-specific compose file due to Docker networking differences:
-
+**Mac Production (containers only, bridge networking)**
 ```bash
-# Mac development
+# Pull pre-built images from registry  
 docker-compose -f docker-compose.mac.yml up -d
 ```
 
-#### Local Development
+#### Development (with local file editing)
 
-For local development, use the build script to create images locally:
-
+**Linux Development (local files + host networking)**
 ```bash
-# Build both images locally
+# Build images locally
 ./build-images.sh
+
+# Start with local file mounting for development
+docker-compose -f docker-compose.dev.yml up -d
 ```
+
+**Mac Development (local files + bridge networking)**
+```bash
+# Build images locally
+./build-images.sh
+
+# Start with local file mounting for development
+docker-compose -f docker-compose.dev.mac.yml up -d
+```
+
+#### Configuration Files
+
+- `docker-compose.yml` - **Linux production** (no local files)
+- `docker-compose.mac.yml` - **Mac production** (no local files)  
+- `docker-compose.dev.yml` - **Linux development** (with local files)
+- `docker-compose.dev.mac.yml` - **Mac development** (with local files)
 
 #### Manual Docker Build
 
