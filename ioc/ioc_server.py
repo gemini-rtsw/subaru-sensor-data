@@ -191,7 +191,7 @@ class SubaruSensorsIOC:
             try:
                 # Fetch sensor data
                 logger.info(f"Fetching sensor data from {SENSORS_URL}")
-                response = requests.get(SENSORS_URL, timeout=5)
+                response = requests.get(SENSORS_URL, timeout=5, verify=False)
                 
                 if response.status_code == 200:
                     data = response.json()

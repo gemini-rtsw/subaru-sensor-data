@@ -40,7 +40,7 @@ WEB_IMAGE="registry.gitlab.com/nsf-noirlab/gemini/rtsw/iocs/subaru-sensor-data/w
 
 # Build IOC image
 print_status "Building IOC image..."
-if docker build -t "$IOC_IMAGE" ./ioc; then
+if docker build --no-cache -t "$IOC_IMAGE" ./ioc; then
     print_status "✅ IOC image built successfully"
 else
     print_error "❌ Failed to build IOC image"
@@ -49,7 +49,7 @@ fi
 
 # Build web image  
 print_status "Building web image..."
-if docker build -t "$WEB_IMAGE" ./web; then
+if docker build --no-cache -t "$WEB_IMAGE" ./web; then
     print_status "✅ Web image built successfully"
 else
     print_error "❌ Failed to build web image"

@@ -7,6 +7,7 @@ RUN apt-get update && \
         git \
         curl \
         wget \
+        ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 # Create app directory
