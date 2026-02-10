@@ -59,35 +59,40 @@ if ! systemctl is-enabled docker > /dev/null 2>&1; then
     echo ""
 fi
 
+show_info() {
+    echo ""
+    info "Services started."
+    info ""
+    info "  Web dashboard:  http://localhost:8000"
+    info ""
+    info "  CA access (caget/camonitor):"
+    info "    export EPICS_CA_AUTO_ADDR_LIST=NO"
+    info "    export EPICS_CA_ADDR_LIST=localhost"
+    info "    export EPICS_CA_SERVER_PORT=15064"
+    info ""
+    info "  PVA access (pvget):"
+    info "    export EPICS_PVA_AUTO_ADDR_LIST=NO"
+    info "    export EPICS_PVA_ADDR_LIST=localhost"
+    info "    export EPICS_PVA_BROADCAST_PORT=15076"
+    info "    export EPICS_PVA_SERVER_PORT=15075"
+    info ""
+    info "  Logs:    ./$SCRIPT_NAME logs"
+    info "  Status:  ./$SCRIPT_NAME status"
+    info "  Stop:    ./$SCRIPT_NAME stop"
+}
+
 # --- Commands ---
 
 case "${1:-start}" in
     start)
         info "Pulling latest images..."
-        docker-compose -f "$COMPOSE_FILE" pull
+        if ! docker-compose -f "$COMPOSE_FILE" pull 2>/dev/null; then
+            warn "Could not pull images (registry unreachable?). Starting with cached images."
+        fi
 
         info "Starting Subaru Sensors services..."
         docker-compose -f "$COMPOSE_FILE" up -d
-
-        echo ""
-        info "Services started."
-        info ""
-        info "  Web dashboard:  http://localhost:8000"
-        info ""
-        info "  CA access (caget/camonitor):"
-        info "    export EPICS_CA_AUTO_ADDR_LIST=NO"
-        info "    export EPICS_CA_ADDR_LIST=localhost"
-        info "    export EPICS_CA_SERVER_PORT=15064"
-        info ""
-        info "  PVA access (pvget):"
-        info "    export EPICS_PVA_AUTO_ADDR_LIST=NO"
-        info "    export EPICS_PVA_ADDR_LIST=localhost"
-        info "    export EPICS_PVA_BROADCAST_PORT=15076"
-        info "    export EPICS_PVA_SERVER_PORT=15075"
-        info ""
-        info "  Logs:    ./$SCRIPT_NAME logs"
-        info "  Status:  ./$SCRIPT_NAME status"
-        info "  Stop:    ./$SCRIPT_NAME stop"
+        show_info
         ;;
 
     stop)
