@@ -1,28 +1,30 @@
 #!/bin/bash
 #
-# Subaru Sensors - Production Startup Script
+# Subaru Sensors - Service Management Script
 #
 # USAGE:
-#   ./start.sh          Pull latest images and start services
-#   ./start.sh stop     Stop all services
-#   ./start.sh status   Show service status and logs
-#   ./start.sh logs     Tail live logs
+#   ./subaru-sensors.sh          Pull latest images and start services
+#   ./subaru-sensors.sh stop     Stop all services
+#   ./subaru-sensors.sh status   Show service status and logs
+#   ./subaru-sensors.sh logs     Tail live logs
 #
 # AFTER VM REBOOT:
 #   Containers restart automatically (restart: unless-stopped).
 #   Docker must be enabled at boot:  sudo systemctl enable docker
 #
 # EPICS CLIENT ACCESS:
-#   The IOC's CA server is on host port 15064 (not the default 5064)
-#   to avoid conflicts with the host EPICS 7 IOC.
+#   The IOC uses non-standard ports to avoid conflicts with the host EPICS 7 IOC.
 #
 #   For caget/camonitor on this host:
-#     export EPICS_CA_ADDR_LIST="localhost:15064 localhost"
 #     export EPICS_CA_AUTO_ADDR_LIST=NO
+#     export EPICS_CA_ADDR_LIST=localhost
+#     export EPICS_CA_SERVER_PORT=15064
 #
-#   For PVA (pvget):
-#     export EPICS_PVA_ADDR_LIST="localhost:15076 localhost"
+#   For pvget on this host:
 #     export EPICS_PVA_AUTO_ADDR_LIST=NO
+#     export EPICS_PVA_ADDR_LIST=localhost
+#     export EPICS_PVA_BROADCAST_PORT=15076
+#     export EPICS_PVA_SERVER_PORT=15075
 #
 #   Web dashboard: http://localhost:8000
 #
@@ -30,6 +32,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+SCRIPT_NAME="$(basename "$0")"
 COMPOSE_FILE="$SCRIPT_DIR/docker-compose.yml"
 
 RED='\033[0;31m'
@@ -72,16 +75,19 @@ case "${1:-start}" in
         info "  Web dashboard:  http://localhost:8000"
         info ""
         info "  CA access (caget/camonitor):"
-        info "    export EPICS_CA_ADDR_LIST=\"localhost:15064 localhost\""
         info "    export EPICS_CA_AUTO_ADDR_LIST=NO"
+        info "    export EPICS_CA_ADDR_LIST=localhost"
+        info "    export EPICS_CA_SERVER_PORT=15064"
         info ""
         info "  PVA access (pvget):"
-        info "    export EPICS_PVA_ADDR_LIST=\"localhost:15076 localhost\""
         info "    export EPICS_PVA_AUTO_ADDR_LIST=NO"
+        info "    export EPICS_PVA_ADDR_LIST=localhost"
+        info "    export EPICS_PVA_BROADCAST_PORT=15076"
+        info "    export EPICS_PVA_SERVER_PORT=15075"
         info ""
-        info "  Logs:    ./start.sh logs"
-        info "  Status:  ./start.sh status"
-        info "  Stop:    ./start.sh stop"
+        info "  Logs:    ./$SCRIPT_NAME logs"
+        info "  Status:  ./$SCRIPT_NAME status"
+        info "  Stop:    ./$SCRIPT_NAME stop"
         ;;
 
     stop)

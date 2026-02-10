@@ -42,12 +42,14 @@ docker-compose down
 
 The system exposes the following PV groups:
 
-- **Humidity**: `SUBARU:HUMIDITY:*`
-- **Temperature**: `SUBARU:TEMP:*`
-- **Wind**: `SUBARU:WIND:*`
-- **Particles**: `SUBARU:PARTICLES:*`
-- **SO2**: `SUBARU:SO2:*`
-- **Other**: `SUBARU:PRESSURE`, `SUBARU:DEWPOINT`, `SUBARU:TIMESTAMP`
+- **Humidity**: `subaru:humidity:*`
+- **Temperature**: `subaru:temp:*`
+- **Wind**: `subaru:wind:*`
+- **Particles**: `subaru:particles:*`
+- **SO2**: `subaru:so2:*`
+- **Other**: `subaru:pressure`, `subaru:dewpoint`, `subaru:timestamp`
+
+See [CA_CLIENT_SETUP.md](CA_CLIENT_SETUP.md) for EPICS client connection instructions.
 
 ## Web API
 
@@ -120,17 +122,24 @@ docker build -t subaru-sensors-web ./web
 ### Project Structure
 
 ```
-├── docker-compose.yml         # Docker Compose configuration
+├── subaru-sensors.sh          # Service management script (start/stop/status/logs)
+├── deploy.sh                  # Deployment script (registry pull or local build)
+├── build-images.sh            # Local image build script
+├── docker-compose.yml         # Linux production compose
+├── docker-compose.mac.yml     # Mac production compose
+├── docker-compose.dev.yml     # Linux development compose
+├── docker-compose.dev.mac.yml # Mac development compose
+├── CA_CLIENT_SETUP.md         # EPICS client connection guide
 ├── ioc/                       # EPICS IOC
-│   ├── Dockerfile             # IOC Docker configuration
-│   ├── requirements.txt       # Python dependencies
-│   └── ioc_server.py          # IOC server implementation
+│   ├── Dockerfile
+│   ├── requirements.txt
+│   └── ioc_server.py
 └── web/                       # Web server
-    ├── Dockerfile             # Web Docker configuration
-    ├── requirements.txt       # Python dependencies
-    ├── web_server.py          # Web server implementation
-    └── templates/             # HTML templates
-        └── index.html         # Dashboard template
+    ├── Dockerfile
+    ├── requirements.txt
+    ├── web_server.py
+    └── templates/
+        └── index.html         # Dashboard with EPICS connection info
 ```
 
 ### Local Development
