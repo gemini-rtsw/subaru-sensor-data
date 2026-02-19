@@ -232,10 +232,6 @@
 <body>
     <div class="header">
         <h1>Subaru Sensors Dashboard</h1>
-        <div class="toggle-container">
-            <span>Show PV Names:</span>
-            <button class="toggle-button" id="pv-toggle" onclick="togglePVNames()">OFF</button>
-        </div>
     </div>
     
     <details class="info-banner">
@@ -273,7 +269,7 @@
         let sensorValues = {};
         let websocket = null;
         let reconnectTimer = null;
-        let showPVNames = false;
+        let showPVNames = true;
         
         // Group definitions (should match server-side)
         const sensorGroups = {
@@ -427,7 +423,7 @@
                                     <span class="pv-name ${pvNameClass}">${sensor.pv}</span>
                                 </span>
                                 <span class="sensor-value alarm-${sensor.alarm}">
-                                    ${sensor.value.toFixed(2)} ${sensor.unit}
+                                    ${sensor.value.toFixed(5)} ${sensor.unit}
                                 </span>
                             </li>
                         `;
