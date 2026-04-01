@@ -838,6 +838,8 @@ if __name__ == "__main__":
     logger.add(
         "web_server.log",
         rotation="10 MB",
+        retention=5,
+        compression="gz",
         level="INFO",
         format="{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <8} | {message}"
     )
