@@ -14,7 +14,25 @@ services:
       - EPICS_PVA_AUTO_ADDR_LIST=NO
       - EPICS_PVA_BROADCAST_PORT=15076
       - EPICS_PVA_SERVER_PORT=15075
+      # App writes its log file here (see ioc_server.py). Backed by the
+      # size-capped tmpfs below so it can never fill the host disk.
+      - LOG_DIR=/var/log/app
     restart: unless-stopped
+    # --- Hard disk-usage ceilings: disk cannot run out, regardless of app behaviour ---
+    # 1. Cap Docker's capture of container stdout/stderr. Without this the
+    #    json-file driver grows without limit on the host disk.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # 2. The app's *.log files live under /var/log/app, backed by a size-capped
+    #    tmpfs (RAM): files can never exceed the cap, are wiped on every restart
+    #    (so nothing accumulates across restarts), and writes past the cap fail
+    #    instead of filling the host disk. Mounted on a dedicated empty dir so it
+    #    does not shadow the app code in /app.
+    tmpfs:
+      - /var/log/app:size=100m
 
   web:
     image: ${CI_REGISTRY_IMAGE:-registry.gitlab.com/nsf-noirlab/gemini/rtsw/iocs/subaru-sensor-data}/web:${CI_COMMIT_REF_SLUG:-master}
@@ -28,4 +46,18 @@ services:
       - EPICS_PVA_AUTO_ADDR_LIST=NO
       - EPICS_PVA_BROADCAST_PORT=15076
       - EPICS_PVA_SERVER_PORT=15075
+      - LOG_DIR=/var/log/app
     restart: unless-stopped
+    # --- Hard disk-usage ceilings: disk cannot run out, regardless of app behaviour ---
+    # The web container starts via `uvicorn web_server:app`, so the __main__
+    # block in web_server.py never runs and its loguru file sink is never
+    # configured: ALL web logs go to stdout and are captured by Docker. The
+    # json-file cap below is the only thing bounding that, and is the most
+    # likely real cause of the disk filling up.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    tmpfs:
+      - /var/log/app:size=100m

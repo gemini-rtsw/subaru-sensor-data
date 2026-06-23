@@ -833,13 +833,23 @@ async def create_index_html():
 
 
 if __name__ == "__main__":
-    # Configure logger
+    import os
+
+    # NOTE: In production the web container starts via `uvicorn web_server:app`,
+    # so this block does NOT run and these file sinks are never configured — all
+    # web logs go to stdout, bounded by the Docker json-file cap in
+    # docker-compose.yml. This block only applies when run directly.
+    #
+    # Disk-usage safety does NOT rely on these retention settings alone (they
+    # are per-process and don't survive container restarts). The hard ceiling is
+    # the size-capped tmpfs LOG_DIR + Docker json-file limits (docker-compose.yml).
+    log_dir = os.environ.get("LOG_DIR", ".")
+    os.makedirs(log_dir, exist_ok=True)
     logger.remove()
     logger.add(
-        "web_server.log",
+        os.path.join(log_dir, "web_server.log"),
         rotation="10 MB",
-        retention=5,
-        compression="gz",
+        retention=2,
         level="INFO",
         format="{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <8} | {message}"
     )

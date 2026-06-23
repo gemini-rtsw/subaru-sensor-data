@@ -286,13 +286,24 @@ class SubaruSensorsIOC:
         logger.info(f"Updated {update_count} PVs out of {len(pv_mapping)} mapped sensors (both PVA and CA)")
 
 if __name__ == "__main__":
-    # Configure logger
+    import os
+
+    # Configure logger.
+    #
+    # Disk-usage safety does NOT rely on these retention settings alone:
+    # loguru retention is per-process and only cleans files the current run
+    # created, so across container restarts old rotated files would otherwise
+    # accumulate. The real hard ceiling is enforced at the container level: the
+    # log file lives under LOG_DIR, which docker-compose.yml backs with a
+    # size-capped tmpfs, plus Docker json-file limits on stdout. These settings
+    # just keep the live file small.
+    log_dir = os.environ.get("LOG_DIR", ".")
+    os.makedirs(log_dir, exist_ok=True)
     logger.remove()
     logger.add(
-        "ioc_server.log",
+        os.path.join(log_dir, "ioc_server.log"),
         rotation="10 MB",
-        retention=5,
-        compression="gz",
+        retention=2,
         level="INFO",
         format="{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <8} | {message}"
     )
