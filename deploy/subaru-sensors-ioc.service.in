@@ -1,0 +1,53 @@
+# systemd unit for the Subaru sensors EPICS IOC on a Docker-daemon host.
+#
+# THIS FILE IS A TEMPLATE. @IMAGE@ is substituted by the RPM spec at build time.
+# Installed as /usr/lib/systemd/system/subaru-sensors-ioc.service and OWNED BY
+# THE PACKAGE: an upgrade overwrites it, which is how a new release moves the
+# host to a new image. Site settings go in /etc/sysconfig/subaru-sensors-ioc,
+# which is %config(noreplace) and survives upgrades.
+#
+# --network host: CA/PVA name resolution is UDP broadcast/search and does not
+# survive bridged/NAT networking. It also means no port isolation -- the IOC
+# uses non-standard ports (see the sysconfig file) so it does not collide with
+# a host EPICS IOC.
+#
+# Foreground `docker run --rm`, deliberately NOT --restart=always: systemd owns
+# the lifecycle. With both, `systemctl stop` leaves the container running.
+
+[Unit]
+Description=Subaru sensors EPICS IOC (CA + PVA)
+Documentation=https://github.com/gemini-rtsw/subaru-sensor-data
+After=docker.service network-online.target
+Requires=docker.service
+Wants=network-online.target
+
+[Service]
+Restart=always
+RestartSec=5
+TimeoutStartSec=0
+
+# Pinned to the NVR-unique tag, never :latest, so `rpm -q subaru-sensor-data`
+# tells you what runs and `dnf downgrade` is a real rollback.
+Environment=IMAGE=@IMAGE@
+
+# Best-effort pull: a registry outage must not stop a working local image.
+# The pull runs as ROOT, so root needs GHCR credentials unless the package is
+# public -- see README "Deploying with systemd".
+ExecStartPre=-/usr/bin/docker pull ${IMAGE}
+ExecStartPre=-/usr/bin/docker rm -f subaru-sensors-ioc
+
+# Disk ceilings: the app's log file lives on a size-capped tmpfs, and Docker's
+# own capture of stdout is capped. stdout also reaches the journal via systemd.
+ExecStart=/usr/bin/docker run --rm --name subaru-sensors-ioc \
+  --network host \
+  --read-only --cap-drop ALL --security-opt no-new-privileges \
+  --tmpfs /var/log/app:size=100m,mode=1777 \
+  --tmpfs /tmp:size=16m,mode=1777 \
+  --log-driver json-file --log-opt max-size=10m --log-opt max-file=3 \
+  --env-file /etc/sysconfig/subaru-sensors-ioc \
+  ${IMAGE} ioc
+
+ExecStop=/usr/bin/docker stop -t 10 subaru-sensors-ioc
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,41 @@
+# systemd unit for the Subaru sensors web dashboard on a Docker-daemon host.
+#
+# THIS FILE IS A TEMPLATE. @IMAGE@ is substituted by the RPM spec at build time.
+# Installed as /usr/lib/systemd/system/subaru-sensors-web.service and OWNED BY
+# THE PACKAGE. Site settings go in /etc/sysconfig/subaru-sensors-web.
+#
+# Same image as subaru-sensors-ioc; the trailing `web` argument picks the role.
+# The web server reconnects to the IOC on its own, so it only orders itself
+# after the IOC (Wants=, not Requires=): restarting the IOC does not take the
+# dashboard down with it.
+
+[Unit]
+Description=Subaru sensors web dashboard
+Documentation=https://github.com/gemini-rtsw/subaru-sensor-data
+After=docker.service network-online.target subaru-sensors-ioc.service
+Requires=docker.service
+Wants=network-online.target subaru-sensors-ioc.service
+
+[Service]
+Restart=always
+RestartSec=5
+TimeoutStartSec=0
+
+Environment=IMAGE=@IMAGE@
+
+ExecStartPre=-/usr/bin/docker pull ${IMAGE}
+ExecStartPre=-/usr/bin/docker rm -f subaru-sensors-web
+
+ExecStart=/usr/bin/docker run --rm --name subaru-sensors-web \
+  --network host \
+  --read-only --cap-drop ALL --security-opt no-new-privileges \
+  --tmpfs /var/log/app:size=100m,mode=1777 \
+  --tmpfs /tmp:size=16m,mode=1777 \
+  --log-driver json-file --log-opt max-size=10m --log-opt max-file=3 \
+  --env-file /etc/sysconfig/subaru-sensors-web \
+  ${IMAGE} web
+
+ExecStop=/usr/bin/docker stop -t 10 subaru-sensors-web
+
+[Install]
+WantedBy=multi-user.target

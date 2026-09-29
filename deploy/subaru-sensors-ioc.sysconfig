@@ -1,0 +1,16 @@
+# Site settings for subaru-sensors-ioc, passed to the container by --env-file.
+# %config(noreplace): edits here survive package upgrades.
+# docker --env-file format: KEY=VALUE, no quotes, no shell expansion.
+#
+# Non-standard ports so the IOC does not collide with a host EPICS IOC on the
+# defaults. Clients on this host need the matching client settings, e.g.
+#   EPICS_CA_ADDR_LIST=localhost EPICS_CA_AUTO_ADDR_LIST=NO EPICS_CA_SERVER_PORT=15064
+EPICS_CA_AUTO_ADDR_LIST=NO
+EPICS_CA_ADDR_LIST=localhost
+EPICS_CAS_INTF_ADDR_LIST=0.0.0.0
+EPICS_CAS_SERVER_PORT=15064
+EPICS_CA_SERVER_PORT=15064
+EPICS_PVA_ADDR_LIST=0.0.0.0
+EPICS_PVA_AUTO_ADDR_LIST=NO
+EPICS_PVA_BROADCAST_PORT=15076
+EPICS_PVA_SERVER_PORT=15075

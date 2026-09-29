@@ -91,3 +91,5 @@ venv/
 ENV/
 env.bak/
 venv.bak/ 
+# gemini-rtsw-ci build output
+rpms/

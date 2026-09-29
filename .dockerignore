@@ -1,0 +1,5 @@
+.git
+gemini-rtsw-ci
+rpms
+**/__pycache__
+**/*.log
