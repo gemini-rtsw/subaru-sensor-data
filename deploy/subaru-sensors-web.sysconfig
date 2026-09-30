@@ -1,0 +1,12 @@
+# Site settings for subaru-sensors-web, passed to the container by --env-file.
+# %config(noreplace): edits here survive package upgrades.
+# docker --env-file format: KEY=VALUE, no quotes, no shell expansion.
+#
+# The PVA settings must match /etc/sysconfig/subaru-sensors-ioc.
+WEB_PORT=8000
+IOC_HOST=localhost
+IOC_PORT=15076
+EPICS_PVA_ADDR_LIST=localhost
+EPICS_PVA_AUTO_ADDR_LIST=NO
+EPICS_PVA_BROADCAST_PORT=15076
+EPICS_PVA_SERVER_PORT=15075

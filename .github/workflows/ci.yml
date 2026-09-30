@@ -1,0 +1,25 @@
+name: Build
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+jobs:
+  build:
+    uses: gemini-rtsw/gemini-rtsw-ci/.github/workflows/ci.yml@main
+    secrets: inherit
+    with:
+      scripts_dir: gemini-rtsw-ci
+      profile: lightweight
+      el_version: '9'
+      spec_path: packaging/subaru-sensor-data.spec
+      # One image carries both the IOC and the web server; the two systemd
+      # units pick the role with the entrypoint argument (ioc | web).
+      app_image: Dockerfile
+
+  # Rebuilds rpm-repo:latest ONCE after the build has pushed its scratch tag.
+  # Without this job the RPM never lands in the served repo.
+  publish:
+    needs: build
+    uses: gemini-rtsw/gemini-rtsw-ci/.github/workflows/publish.yml@main
+    secrets: inherit
