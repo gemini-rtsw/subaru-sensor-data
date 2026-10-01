@@ -30,10 +30,12 @@ TimeoutStartSec=0
 # tells you what runs and `dnf downgrade` is a real rollback.
 Environment=IMAGE=@IMAGE@
 
-# Best-effort pull: a registry outage must not stop a working local image.
-# The pull runs as ROOT, so root needs GHCR credentials unless the package is
-# public -- see README "Deploying with systemd".
-ExecStartPre=-/usr/bin/docker pull ${IMAGE}
+# The pull runs as the `software` user, NOT root: root on production hosts has
+# no GHCR credentials, `software` is in the docker group and logged in to GHCR.
+# Pulls only when the image is missing (like Podman's Pull=missing): the tag is
+# pinned, so once the image is here there is nothing new to fetch. Hosts without
+# a `software` account (dev) get a message saying what to pull by hand.
+ExecStartPre=/bin/sh -c 'docker image inspect "$IMAGE" >/dev/null 2>&1 || runuser -u software -- docker pull "$IMAGE" || { echo "Image $IMAGE is not on this host. As a docker-group user run: docker pull $IMAGE" >&2; exit 1; }'
 ExecStartPre=-/usr/bin/docker rm -f subaru-sensors-ioc
 
 # Disk ceilings: the app's log file lives on a size-capped tmpfs, and Docker's

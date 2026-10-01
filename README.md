@@ -76,57 +76,35 @@ The RPM ships only two systemd units, `subaru-sensors-ioc` and
 their settings live in `/etc/sysconfig/subaru-sensors-{ioc,web}`. Those files
 survive upgrades.
 
-**`dnf install` does not pull the image and does not start anything.** The
-units pull the image as root when they start (`ExecStartPre=-docker pull`):
+**`dnf install` does not pull the image.** Pre-pull it as a docker-group user
+logged in to GHCR (a PAT (classic) with `read:packages`), then install and start:
 
 ```bash
-sudo dnf install subaru-sensor-data
+docker pull ghcr.io/gemini-rtsw/subaru-sensor-data:<version>-git<hash>   # no sudo
+sudo dnf install subaru-sensor-data-<version>-1.git<hash>.el9
 sudo systemctl enable --now subaru-sensors-ioc subaru-sensors-web
-journalctl -u subaru-sensors-ioc -f        # watch the first pull and start
+journalctl -u subaru-sensors-ioc -f
 curl -s localhost:8000/api/sensors | head -c 200
 ```
 
-Upgrades behave the same way: `dnf upgrade` swaps in the new units, and the new
-image is pulled on the next `sudo systemctl restart subaru-sensors-ioc subaru-sensors-web`.
-Roll back with `dnf downgrade subaru-sensor-data` and restart.
+The tag to pull is the one in the unit: `grep IMAGE= /usr/lib/systemd/system/subaru-sensors-ioc.service`.
 
-#### Root must be able to pull from GHCR
+If you forget, the unit pulls it itself, **as the `software` user**. Root on
+production hosts has no GHCR credentials; `software` is in the docker group and
+logged in. It only pulls when the image is missing. On hosts without a
+`software` account, such as dev machines, the unit fails with `Image ... is not
+on this host. As a docker-group user run: docker pull ...` and retries every 5 s,
+so it starts by itself once you have pulled.
 
-gemini-rtsw images on GHCR are private, and the unit pulls as **root**, not as
-you. Your own `docker login` does not count. If root has no credential, the
-failure is quiet: the pull is best-effort, so `docker run` then reports
-`Unable to find image ... denied` or `unauthorized`, and systemd restarts the
-unit every 5 s. Check with `journalctl -u subaru-sensors-ioc`.
+**Upgrade:** pull the new tag, `dnf upgrade subaru-sensor-data-<nvr>`, then
+`sudo systemctl restart subaru-sensors-ioc subaru-sensors-web`.
+**Roll back:** `dnf downgrade subaru-sensor-data-<old nvr>` and restart. The old
+image is normally still on the host; if not, pull it first.
 
-Do one of the following, once per host. You need a PAT (classic) with
-`read:packages`.
-
-1. **sudo allows docker:**
-   ```bash
-   echo "<PAT>" | sudo -H docker login ghcr.io -u <github-user> --password-stdin
-   sudo docker pull ghcr.io/gemini-rtsw/subaru-sensor-data:latest    # proves root can pull
-   ```
-   `-H` is required. Without it, sudo may keep your `HOME`, so the login
-   reports success but writes the credential to your own config, not root's.
-2. **sudo does not allow docker, but you are in the `docker` group** (which is
-   root-equivalent): log in as yourself, then copy the credential into root's
-   home with a container:
-   ```bash
-   echo "<PAT>" | docker login ghcr.io -u <github-user> --password-stdin
-   grep -q credsStore ~/.docker/config.json && echo "credential helper in use: copy will NOT work"
-   docker run --rm -u 0 -v /root:/r -v "$HOME/.docker/config.json":/c:ro \
-     ghcr.io/gemini-rtsw/subaru-sensor-data:latest \
-     sh -c 'mkdir -p /r/.docker && cp /c /r/.docker/config.json'
-   ```
-   This overwrites any existing `/root/.docker/config.json`. It uses an image
-   you have already pulled, so it works without Docker Hub access.
-3. **Neither:** ask an admin to do (1), or make the package public
-   (github.com/orgs/gemini-rtsw/packages/container/subaru-sensor-data/settings).
-   With a public package, root needs no credential at all.
-
-Stopgap only: `docker pull <the image in the unit>` as any docker-group user
-puts the image in the shared daemon store, so the unit's pull becomes a no-op.
-You would have to repeat it for every new version.
+**No GHCR access on the host at all:** on a machine that has it, run
+`docker save <image> | gzip > image.tar.gz`, copy the file over, and run
+`docker load < image.tar.gz`. Save by the full `ghcr.io/...` name so the loaded
+tag matches the unit.
 
 The docker-compose files below are for development. Do not run them alongside
 the systemd units, because they use the same host ports.
